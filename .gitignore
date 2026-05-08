@@ -1,0 +1,39 @@
+# Build folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Rider / JetBrains
+.idea/
+
+# Node (if any later)
+node_modules/
+
+# Environment files
+.env
+
+# Docker
+docker-compose.override.yml
+
+# Kafka / data (important)
+kafka-data/
+logs/
+
+# Temporary files
+*.tmp
+*.temp
