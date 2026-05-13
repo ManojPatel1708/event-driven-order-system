@@ -1,6 +1,8 @@
 # 🚀 Event Driven Order System (.NET + Kafka)
 
-This project demonstrates a **production-style event-driven microservices architecture** using **.NET and Apache Kafka (KRaft mode - no Zookeeper)**.
+This project demonstrates a **production-style event-driven microservices architecture** using **.NET and Apache Kafka**.
+
+⚠️ Note: Initially implemented using Kafka KRaft mode (no Zookeeper), but switched to Zookeeper-based Kafka for stability during local development.
 
 ---
 
@@ -22,7 +24,8 @@ OrderService → Kafka → PaymentService → Kafka → NotificationService
 ## 🧰 Tech Stack
 
 - .NET 6/7
-- Apache Kafka (KRaft mode)
+- Apache Kafka
+- Zookeeper
 - Docker
 - Confluent.Kafka
 
@@ -31,122 +34,157 @@ OrderService → Kafka → PaymentService → Kafka → NotificationService
 ## 📁 Project Structure
 
 event-driven-order-system/
-
-- OrderService/
-- PaymentService/
-- NotificationService/
-- docker-compose.yml
-- README.md
+├── OrderService/
+├── PaymentService/
+├── NotificationService/
+├── docker-compose.yml
+└── README.md
 
 ---
 
 ## ⚙️ Prerequisites
 
-Make sure you have installed:
-
-- .NET SDK (6 or above)
+- .NET SDK 6+
 - Docker Desktop
-- Git (optional)
 
 ---
 
-## 🐳 Step 1: Start Kafka (KRaft Mode - No Zookeeper)
-
-Run:
+## 🐳 Step 1: Start Kafka
 
 docker-compose up -d
 
 ---
 
-## ✅ Verify Kafka is running
-
-Run:
+## ✅ Verify Kafka
 
 docker ps
 
-You should see Kafka running on:
-
-localhost:9092
-
----
-
-## 🏗️ Step 2: Build Projects
-
-Run the following inside each service:
-
-cd OrderService
-dotnet build
-
-Repeat for:
-
-cd PaymentService
-dotnet build
-
-cd NotificationService
-dotnet build
+You should see:
+kafka  
+zookeeper  
 
 ---
 
-## ▶️ Step 3: Run Services (3 Terminals)
+## 🧱 Step 2: Create Topics
 
-Terminal 1 → Notification Service
-
-cd NotificationService
-dotnet run
+docker exec -i kafka bash -c "kafka-topics --create --topic order-created --bootstrap-server localhost:9092 --if-not-exists && kafka-topics --create --topic payment-success --bootstrap-server localhost:9092 --if-not-exists && kafka-topics --create --topic payment-retry --bootstrap-server localhost:9092 --if-not-exists && kafka-topics --create --topic payment-dlq --bootstrap-server localhost:9092 --if-not-exists"
 
 ---
 
-Terminal 2 → Payment Service
+## ✅ Verify Topics
 
-cd PaymentService
-dotnet run
+docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
+
+Expected:
+order-created  
+payment-success  
+payment-retry  
+payment-dlq  
 
 ---
 
-Terminal 3 → Order Service
+## 🔍 Debug Kafka Messages
 
-cd OrderService
-dotnet run
+docker exec -it kafka kafka-console-consumer --topic order-created --from-beginning --bootstrap-server localhost:9092
+
+---
+
+## 🏗️ Build Services
+
+cd OrderService && dotnet build  
+cd ../PaymentService && dotnet build  
+cd ../NotificationService && dotnet build  
+
+---
+
+## ▶️ Run Services (Important Order)
+
+Terminal 1:
+cd NotificationService  
+dotnet run  
+
+Terminal 2:
+cd PaymentService  
+dotnet run  
+
+Terminal 3:
+cd OrderService  
+dotnet run  
 
 ---
 
 ## 🎯 Expected Output
 
-You will see logs like:
+OrderService:
+✅ Order Created
 
-✅ Order Created: ORD-12345  
-💳 Processing payment for Order: ORD-12345  
-✅ Payment Successful  
-📧 Sending notification for Order: ORD-12345  
+PaymentService:
+📩 Received Order  
+💳 Processing payment  
+✅ Payment success  
 
----
-
-## 🧠 Key Concepts Demonstrated
-
-- Event-driven architecture  
-- Producer / Consumer pattern  
-- Microservices communication via Kafka  
-- Decoupled system design  
-- Real-time data processing  
+NotificationService:
+📧 Sending notification  
 
 ---
 
-## 💡 Real-World Use Cases
+## 🔄 Retry & DLQ
 
-- E-commerce order processing systems  
-- Payment processing pipelines  
-- Real-time analytics platforms  
-- Distributed system communication  
+Kafka topics used:
+
+- order-created
+- payment-success
+- payment-retry
+- payment-dlq
+
+---
+
+## ⚠️ Common Issues
+
+### No messages in consumer
+
+- Ensure topics exist
+- Start consumers BEFORE producer
+- Use new consumer GroupId
+
+### Kafka shows 0 messages
+
+- Inside container → use kafka:9092  
+- Outside → use localhost:9092  
+
+### KRaft setup failed
+
+- Listener misconfiguration
+- Topic not persisted
+- Switching to Zookeeper resolved stability issues
+
+---
+
+## 🧠 Key Learnings
+
+- Kafka topics must exist before producing
+- Consumer groups control message consumption
+- Docker networking differs from host
+- Kafka listener configuration is critical
+
+---
+
+## 💡 Use Cases
+
+- Order processing systems
+- Payment pipelines
+- Event-driven microservices
+- Real-time processing
 
 ---
 
 ## 🚀 Future Enhancements
 
-- Retry mechanism  
-- Dead Letter Queue (DLQ)  
-- MongoDB persistence  
-- Centralized logging (Serilog)  
-- Full Dockerized microservices  
+- MongoDB persistence
+- Logging (Serilog)
+- Retry backoff strategy
+- Dockerized microservices
+- Kubernetes deployment
 
 ---
 

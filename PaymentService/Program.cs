@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using PaymentService.Models;
 using System.Text.Json;
 
 var consumerConfig = new ConsumerConfig
@@ -18,24 +19,48 @@ using var producer = new ProducerBuilder<Null, string>(producerConfig).Build();
 
 consumer.Subscribe("order-created");
 
-Console.WriteLine("💳 Payment Service started...");
+Console.WriteLine("✅ Payment Service started...");
+Console.WriteLine("👂 Waiting for messages...");
 
 while (true)
 {
-    var consumeResult = consumer.Consume();
-
-    var order = JsonSerializer.Deserialize<dynamic>(consumeResult.Message.Value);
-
-    Console.WriteLine($"Processing payment for Order: {order.OrderId}");
-
-    var paymentEvent = new
+    try
     {
-        OrderId = order.OrderId,
-        Status = "PAYMENT_SUCCESS"
-    };
+        var consumeResult = consumer.Consume(TimeSpan.FromSeconds(5));
 
-    await producer.ProduceAsync("payment-success", new Message<Null, string>
+        if (consumeResult == null)
+        {
+            Console.WriteLine("⌛ No messages yet...");
+            continue;
+        }
+
+        Console.WriteLine($"📩 Received: {consumeResult.Message.Value}");
+
+        var order = JsonSerializer.Deserialize<Order>(consumeResult.Message.Value);
+
+        if (order == null)
+        {
+            Console.WriteLine("❌ Failed to deserialize");
+            continue;
+        }
+
+        Console.WriteLine($"💳 Processing Order: {order.OrderId}");
+
+        var paymentEvent = new
+        {
+            OrderId = order.OrderId,
+            Status = "PAYMENT_SUCCESS"
+        };
+
+        await producer.ProduceAsync("payment-success", new Message<Null, string>
+        {
+            Value = JsonSerializer.Serialize(paymentEvent)
+        });
+
+        Console.WriteLine($"✅ Payment success: {order.OrderId}");
+    }
+    catch (Exception ex)
     {
-        Value = JsonSerializer.Serialize(paymentEvent)
-    });
+        Console.WriteLine($"❌ ERROR: {ex.Message}");
+    }
 }
