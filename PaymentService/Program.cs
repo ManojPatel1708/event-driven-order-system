@@ -19,8 +19,8 @@ using var producer = new ProducerBuilder<Null, string>(producerConfig).Build();
 
 consumer.Subscribe("order-created");
 
-Console.WriteLine("✅ Payment Service started...");
-Console.WriteLine("👂 Waiting for messages...");
+Console.WriteLine("Payment Service started...");
+Console.WriteLine("Waiting for messages...");
 
 while (true)
 {
@@ -30,21 +30,21 @@ while (true)
 
         if (consumeResult == null)
         {
-            Console.WriteLine("⌛ No messages yet...");
+            Console.WriteLine("No messages yet...");
             continue;
         }
 
-        Console.WriteLine($"📩 Received: {consumeResult.Message.Value}");
+        Console.WriteLine($"Received: {consumeResult.Message.Value}");
 
         var order = JsonSerializer.Deserialize<Order>(consumeResult.Message.Value);
 
         if (order == null)
         {
-            Console.WriteLine("❌ Failed to deserialize");
+            Console.WriteLine("Failed to deserialize");
             continue;
         }
 
-        Console.WriteLine($"💳 Processing Order: {order.OrderId}");
+        Console.WriteLine($"Processing Order: {order.OrderId}");
 
         var paymentEvent = new
         {
@@ -57,10 +57,10 @@ while (true)
             Value = JsonSerializer.Serialize(paymentEvent)
         });
 
-        Console.WriteLine($"✅ Payment success: {order.OrderId}");
+        Console.WriteLine($"Payment success: {order.OrderId}");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ ERROR: {ex.Message}");
+        Console.WriteLine($"ERROR: {ex.Message}");
     }
 }

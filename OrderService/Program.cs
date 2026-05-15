@@ -54,15 +54,15 @@ try
         }
     });
 
-    Console.WriteLine("✅ Topics created successfully");
+    Console.WriteLine("Topics created successfully");
 }
 catch (CreateTopicsException ex)
 {
-    Console.WriteLine("⚠ Topics may already exist");
+    Console.WriteLine("Topics may already exist");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"❌ ERROR creating topics: {ex.Message}");
+    Console.WriteLine($"ERROR creating topics: {ex.Message}");
 }
 
 
@@ -87,12 +87,12 @@ try
         Value = json
     });
 
-    Console.WriteLine($"✅ Order Created: {order.OrderId}");
-    Console.WriteLine($"📍 Delivered to topic: {result.Topic}, partition: {result.Partition}, offset: {result.Offset}");
+    Console.WriteLine($"Order Created: {order.OrderId}");
+    Console.WriteLine($"Delivered to topic: {result.Topic}, partition: {result.Partition}, offset: {result.Offset}");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"❌ ERROR while sending: {ex.Message}");
+    Console.WriteLine($"ERROR while sending: {ex.Message}");
 }
 
 producer.Flush(TimeSpan.FromSeconds(5));
